@@ -2,6 +2,11 @@ import cv2
 from argparse import ArgumentParser
 from src.input_feeder import InputFeeder
 from src.mouse_controller import MouseController
+from src.face_detection import FaceDetection
+from src.head_pose_estimation import HeadPose
+from src.facial_landmarks_detection import FacialLandmarks
+from src.gaze_estimation import Gaze
+
 
 def build_argparser():
     """
@@ -34,16 +39,31 @@ def build_argparser():
 def main():
     # read parameters from command line
     args = build_argparser().parse_args()
-    # test argparser
-    print(args.face)
-    print(args.head)
-    print(args.landmark)
-    print(args.gaze)
-    print(args.source)
-    print(args.file)
-    print(args.device)
-    print(args.extension)
-    print(args.results)
+    
+    # Load models
+    print(("Loading Face Detection Model."))
+    face = FaceDetection(model_name=args.face, device=args.device, extensions=args.extension)
+    face.load_model()
+    print("Face detection model loaded successfully.\n")
+
+    print(("Loading Head Pose Estimation Model."))
+    head_pose = HeadPose(model_name=args.head, device=args.device, extensions=args.extension)
+    head_pose.load_model()
+    print("Head Pose Estimation model loaded successfully.\n")
+
+    print(("Facial Landmarks Detection Model."))
+    facial_landmark = FacialLandmarks(model_name=args.landmark, device=args.device, extensions=args.extension)
+    facial_landmark.load_model()
+    print("Facial Landmarks Detection model loaded successfully.\n")
+
+    print(("Gaze Estimation Model."))
+    gaze = Gaze(model_name=args.gaze, device=args.device, extensions=args.extension)
+    gaze.load_model()
+    print("Gaze Estimation model loaded successfully.\n")
+
+    print(("All model loaded successfully"))
+
+    
 
 if __name__=='__main__':
     main()
