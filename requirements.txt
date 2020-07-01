@@ -1,0 +1,4 @@
+PyAutoGUI
+matplotlib
+numpy
+opencv_python
