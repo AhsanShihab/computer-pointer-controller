@@ -1,5 +1,6 @@
 from openvino.inference_engine import IENetwork, IECore
 import cv2
+import math
 
 class Gaze:
     '''
@@ -56,12 +57,39 @@ class Gaze:
         # Loading model
         self.exec_network = self.core.load_network(self.network, self.device)
 
-    def predict(self, image):
+    def predict(self, head_pose_angles, left_eye_image, right_eye_image):
         '''
-        TODO: You will need to complete this method.
-        This method is meant for running predictions on the input image.
+        This method is meant for running predictions on the input data.
+        return: x and y of gaze vector
         '''
-        raise NotImplementedError
+        # Get processed data
+        left_eye_image, right_eye_image = self.preprocess_input(left_eye_image, right_eye_image)
+
+        # set up the input dictionary
+        inputs = {self.input_name[0]: head_pose_angles, 
+                self.input_name[1]: left_eye_image, 
+                self.input_name[2]: right_eye_image}
+
+        # start async request
+        self.exec_network.start_async(0, inputs=inputs)
+
+        # get async request output
+        status = self.exec_network.requests[0].wait(-1)
+        if status == 0:
+            outputs = self.exec_network.requests[0].outputs[self.output_name]
+        
+        # normalize the gaze vectors
+        outputs = outputs / cv2.norm(outputs)
+
+        # extract x, y and roll
+        x = outputs[0,0]
+        y = outputs[0,1]
+        roll = head_pose_angles[0,2]
+
+        # process output
+        outputs = self.preprocess_output(roll, x, y)
+
+        return outputs
 
     def check_model(self):
         """
@@ -107,9 +135,16 @@ class Gaze:
         
         return left_eye_image, right_eye_image
 
-    def preprocess_output(self, outputs):
+    def preprocess_output(self, roll, x, y):
         '''
-        Before feeding the output of this model to the next model,
-        you might have to preprocess the output. This function is where you can do that.
+        Modifies x and y according to head position
+        return: x and y
         '''
-        raise NotImplementedError
+        # rotate gaze vector to compensate for the head alignment
+        cs = math.cos(roll * math.pi / 180)
+        sn = math.sin(roll * math.pi / 180)
+
+        x = x * cs + y * sn
+        y = -x * sn + y * cs
+
+        return x, y
