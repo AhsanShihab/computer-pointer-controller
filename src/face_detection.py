@@ -79,7 +79,7 @@ class FaceDetection:
         xmin, ymin, xmax, ymax = self.preprocess_output(outputs)
         xmin, ymin, xmax, ymax = int(xmin*ow), int(ymin*oh), int(xmax*ow), int(ymax*oh)
 
-        return xmin, ymin, xmax, ymax
+        return True, (xmin, ymin, xmax, ymax)
 
     def check_model(self):
         """

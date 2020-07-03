@@ -84,10 +84,18 @@ class HeadPose:
 
     def preprocess_input(self, image):
         '''
-        Before feeding the data into the model for inference,
-        you might have to preprocess it. This function is where you can do that.
+        Preprocess the input image to the expected input shape for the model
+        return: preprocessed image
         '''
-        raise NotImplementedError
+        # get model's expected shape
+        batch, channel, height, width = self.input_shape
+
+        # processs image to match input
+        image = cv2.resize(image, (width, height))
+        image = image.transpose((2, 0, 1)) # bringing the color channel first
+        image = image.reshape(1, 3, height, width) # adds batch size to match model's expected input shape
+
+        return image
 
     def preprocess_output(self, outputs):
         '''

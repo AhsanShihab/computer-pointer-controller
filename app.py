@@ -84,12 +84,23 @@ def main():
 
     # process video feed
     for frame in feed.next_batch():
-        # show current frame
-        face_location = face.predict(frame)
-        #frame = cv2.rectangle(frame, (face_location[0], face_location[1]), (face_location[2], face_location[3]), (0,255,0), 2) 
-        #frame = cv2.resize(frame, (800, 400))
-        frame = crop_image(face_location, frame)
-        cv2.imshow("Frame", frame)
+        # detect face
+        face_found, face_location = face.predict(frame)
+        if face_found:
+            # prepare for proceeding to the next models
+            cropped_face = crop_image(face_location, frame)
+
+            # get head pose
+            head_position = head_pose.predict(cropped_face)
+
+        else:
+            pass
+
+        if args.results == 1:
+            frame = cv2.rectangle(frame, (face_location[0], face_location[1]), (face_location[2], face_location[3]), (0,255,0), 2) 
+            frame = cv2.resize(frame, (800, 400))
+            cv2.imshow("Frame", frame)
+        
 
         # listening for key press to break, press q to break
         if cv2.waitKey(25) & 0xFF == ord('q'):
