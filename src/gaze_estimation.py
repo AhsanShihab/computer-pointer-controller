@@ -82,12 +82,30 @@ class Gaze:
         
         return extension_needed
 
-    def preprocess_input(self, image):
+    def preprocess_input(self, left_eye_image, right_eye_image):
         '''
-        Before feeding the data into the model for inference,
-        you might have to preprocess it. This function is where you can do that.
+        Preprocess the input image to the expected input shape for the model
+        return: preprocessed left eye and right eye images
         '''
-        raise NotImplementedError
+        # get model input shape
+        left_eye_shape = self.network.inputs[self.input_name[1]].shape
+        right_eye_shape = self.network.inputs[self.input_name[2]].shape
+
+        # get expected height and width
+        left_height, left_width = left_eye_shape[2], left_eye_shape[3]
+        right_height, right_width = right_eye_shape[2], right_eye_shape[3]
+
+        # process left eye image
+        left_eye_image = cv2.resize(left_eye_image, (left_width, left_height))
+        left_eye_image = left_eye_image.transpose((2, 0, 1)) # bringing the color channel first
+        left_eye_image = left_eye_image.reshape(1, 3, left_height, left_width) # adding batch size to match model's expected input shape
+
+        # process right eye image
+        right_eye_image = cv2.resize(right_eye_image, (right_width, right_height))
+        right_eye_image = right_eye_image.transpose((2, 0, 1)) # bringing the color channel first
+        right_eye_image = right_eye_image.reshape(1, 3, right_height, right_width) # adding batch size to match model's expected input shape
+        
+        return left_eye_image, right_eye_image
 
     def preprocess_output(self, outputs):
         '''
