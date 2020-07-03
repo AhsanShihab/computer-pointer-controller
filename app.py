@@ -115,6 +115,9 @@ def main():
         if cv2.waitKey(25) & 0xFF == ord('q'):
             logging.info("Break key pressed") 
             break
+    
+    feed.close()
+    cv2.destroyAllWindows()
 
     
 
