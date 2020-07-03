@@ -7,6 +7,8 @@ from src.head_pose_estimation import HeadPose
 from src.facial_landmarks_detection import FacialLandmarks
 from src.gaze_estimation import Gaze
 
+import time
+
 
 def build_argparser():
     """
@@ -51,6 +53,10 @@ def crop_image(boundary, image):
 def main():
     # read parameters from command line
     args = build_argparser().parse_args()
+
+    cv2.namedWindow("Computer Pointer Controller")
+    cv2.resizeWindow("Computer Pointer Controller", 350, 5)
+    cv2.moveWindow("Computer Pointer Controller", 0, 0)
     
     # Load models
     print("Loading Face Detection Model.")
@@ -84,7 +90,10 @@ def main():
     feed.load_data()
 
     # process video feed
+    counter = 0
+    start = time.time()
     for frame in feed.next_batch():
+        counter += 1
         # detect face
         face_found, face_location = face.predict(frame)
         if face_found:
@@ -92,14 +101,21 @@ def main():
             cropped_face = crop_image(face_location, frame)
 
             # get head pose
-            head_position = head_pose.predict(frame)
+            head_pose_angles = head_pose.predict(frame)
 
             # get left and right eye locations
             left_eye, right_eye = facial_landmark.predict(cropped_face)
-            
             # crop the eyes
             left_eye_img = crop_image(left_eye, cropped_face)
             right_eye_img = crop_image(right_eye, cropped_face)
+
+            # get gaze estimation
+            gaze_estimation = gaze.predict(head_pose_angles, left_eye_img, right_eye_img)
+
+            # get x,y from gaze estimation
+            x = gaze_estimation[0]
+            y = gaze_estimation[1]
+
 
         else:
             pass
@@ -110,19 +126,19 @@ def main():
             # resize frame
             frame = cv2.resize(frame, (800, 400))
             # show frame
-            cv2.imshow("Frame", frame)
+            cv2.imshow("Computer Pointer Controller", frame)
 
         elif args.results == 2:
             # resize frame
             frame = cv2.resize(frame, (800, 400))
             # extract info from result
-            yaw, pitch, roll = head_position[0, 0], head_position[0, 1], head_position[0, 2]
+            yaw, pitch, roll = head_pose_angles[0, 0], head_pose_angles[0, 1], head_pose_angles[0, 2]
             # write results on frame
             cv2.putText(frame, "yaw: " + str(yaw), (5,10), cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 255, 0), 1)
             cv2.putText(frame, "pitch: " + str(pitch), (5,30), cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 255, 0), 1)
             cv2.putText(frame, "roll: " + str(roll), (5,50), cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 255, 0), 1)
             # show frame
-            cv2.imshow("Head Position", frame)
+            cv2.imshow("Computer Pointer Controller", frame)
         
         elif args.results == 3:
             # extract info from result
@@ -146,16 +162,27 @@ def main():
             # resize frame
             frame = cv2.resize(frame, (800, 400))
             # show frame
-            cv2.imshow("Frame", frame)
+            cv2.imshow("Computer Pointer Controller", frame)
         
+        elif args.results == -1:
+            frame = cv2.resize(frame, (800, 400))
+            cv2.putText(frame, "x: "+ str(x), (5,10), cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 255, 0), 1)
+            cv2.putText(frame, "y: "+ str(y), (5,30), cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 255, 0), 1)
+            cv2.imshow("Computer Pointer Controller", frame)
+
+        elif args.results == 0:
+            pass
 
         # listening for key press to break, press q to break
         if cv2.waitKey(1) & 0xFF == ord('q'):
-            logging.info("Break key pressed") 
+            print("Break key pressed") 
             break
-    
+    end = time.time()
     feed.close()
     cv2.destroyAllWindows()
+
+    FPS = counter/(end - start)
+    print("Total inference done at "+str(FPS)+" FPS")
 
     
 
