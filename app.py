@@ -63,6 +63,24 @@ def main():
 
     print(("All model loaded successfully"))
 
+    # Create Mouse controller object
+    mouse = MouseController(precision="high", speed="fast")
+
+    # Read video feed
+    feed = InputFeeder(input_type=args.source, input_file=args.file)
+    feed.load_data()
+
+    # process video feed
+    for frame in feed.next_batch():
+        # show current frame
+        frame = cv2.resize(frame, (800, 400))
+        cv2.imshow("Frame", frame)
+
+        # listening for key press to break, press q to break
+        if cv2.waitKey(25) & 0xFF == ord('q'):
+            logging.info("Break key pressed") 
+            break
+
     
 
 if __name__=='__main__':
