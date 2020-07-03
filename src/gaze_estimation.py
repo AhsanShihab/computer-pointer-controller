@@ -33,17 +33,7 @@ class Gaze:
         return: None
         '''
         # check for unsupported layers
-        network_layers = self.network.layers.keys()
-        layer_map = self.core.query_network(network=self.network, device_name=self.device)
-        supported_layers = layer_map.keys()
-        extension_needed = False
-
-        for layer in network_layers:
-            if layer in supported_layers:
-                pass
-            else:
-                extension_needed=True
-                break
+        extension_needed = self.check_model()
 
         # Adding extension if needed
         if extension_needed:
@@ -55,15 +45,7 @@ class Gaze:
                 raise
             
             # Recheck if all layers are now supported after adding extension
-            layer_map = self.core.query_network(network=self.network, device_name=self.device)
-            supported_layers = layer_map.keys()
-            extension_needed = False
-
-            for layer in network_layers:
-                if layer in supported_layers:
-                    pass
-                else:
-                    extension_needed=True
+            extension_needed = self.check_model()
             
             if extension_needed:
                 print('Some layers are unsupported. Exit program.')
@@ -82,7 +64,23 @@ class Gaze:
         raise NotImplementedError
 
     def check_model(self):
-        raise NotImplementedError
+        """
+        Checks the model if there is any unsupported layers
+        return: True if unsupported layer exists, False otherwise
+        """
+        network_layers = self.network.layers.keys()
+        layer_map = self.core.query_network(network=self.network, device_name=self.device)
+        supported_layers = layer_map.keys()
+        extension_needed = False
+
+        for layer in network_layers:
+            if layer in supported_layers:
+                pass
+            else:
+                extension_needed=True
+                break
+        
+        return extension_needed
 
     def preprocess_input(self, image):
         '''
