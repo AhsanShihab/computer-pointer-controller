@@ -58,10 +58,24 @@ class FacialLandmarks:
 
     def predict(self, image):
         '''
-        TODO: You will need to complete this method.
         This method is meant for running predictions on the input image.
+        return: Coordinates of left eye and right eye
         '''
-        raise NotImplementedError
+        # Get processed data
+        processed_image = self.preprocess_input(image)
+
+        # start async request
+        self.exec_network.start_async(0, inputs={self.input_name: processed_image})
+
+        # get async request output
+        status = self.exec_network.requests[0].wait(-1)
+        if status == 0:
+            outputs = self.exec_network.requests[0].outputs[self.output_name]
+        
+        # Get the eye locations
+        left_eye, right_eye = self.preprocess_output(outputs, image)
+
+        return left_eye, right_eye
 
     def check_model(self):
         """
@@ -97,9 +111,36 @@ class FacialLandmarks:
 
         return image
 
-    def preprocess_output(self, outputs):
+    def preprocess_output(self, outputs, image):
         '''
-        Before feeding the output of this model to the next model,
-        you might have to preprocess the output. This function is where you can do that.
+        Process the output and extracts the bounding box coordinates of left eye and right eye
+        return: Two touples containing two eyes (left eye followed by right eye) bouding box coordinates
         '''
-        raise NotImplementedError
+        # original height, width and channel
+        oh, ow, c = image.shape
+
+        # extract left eye and right eye centers' coordinates
+        left_eye_x = outputs[0,0]
+        left_eye_y = outputs[0,1]
+        right_eye_x = outputs[0,2]
+        right_eye_y = outputs[0,3]
+
+        # convert coordinates with respect to main image
+        left_eye_x = int(left_eye_x * ow)
+        left_eye_y = int(left_eye_y * oh)
+        right_eye_x = int(right_eye_x * ow)
+        right_eye_y = int(right_eye_y * oh)
+
+        # box around left eye, 30px space on each side from the center, resulting 60x60px box
+        left_eye_xmin, left_eye_xmax = max(left_eye_x - 30, 0), min(left_eye_x + 30, ow)
+        left_eye_ymin, left_eye_ymax = max(left_eye_y - 30, 0), min(left_eye_y + 30, oh)
+
+        # box around right eye, 30px space on each side from the center, resulting 60x60px box
+        right_eye_xmin, right_eye_xmax = max(right_eye_x - 30, 0), min(right_eye_x + 30, ow)
+        right_eye_ymin, right_eye_ymax = max(right_eye_y - 30, 0), min(right_eye_y + 30, oh)
+
+        # pack the result in two touples
+        left_eye = (left_eye_xmin, left_eye_ymin, left_eye_xmax, left_eye_ymax)
+        right_eye = (right_eye_xmin, right_eye_ymin, right_eye_xmax, right_eye_ymax)
+
+        return left_eye, right_eye
