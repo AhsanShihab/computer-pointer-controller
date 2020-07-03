@@ -36,6 +36,18 @@ def build_argparser():
                         help="Show the result from model. 0 to OFF the display, 1 to display cropped face, 2 to display head pose, 3 to display cropped eye, -1 to show main frame with final output, default option")
     return parser
 
+def crop_image(boundary, image):
+    """
+    Crops the given image based on the given boundary coordinates
+    return: Cropped Image
+    """
+    # get the coordinates
+    xmin, ymin, xmax, ymax = boundary
+    # crop the image
+    cropped_image = image[ymin:ymax, xmin:xmax]
+
+    return cropped_image
+
 def main():
     # read parameters from command line
     args = build_argparser().parse_args()
@@ -74,8 +86,9 @@ def main():
     for frame in feed.next_batch():
         # show current frame
         face_location = face.predict(frame)
-        frame = cv2.rectangle(frame, (face_location[0], face_location[1]), (face_location[2], face_location[3]), (0,255,0), 2) 
-        frame = cv2.resize(frame, (800, 400))
+        #frame = cv2.rectangle(frame, (face_location[0], face_location[1]), (face_location[2], face_location[3]), (0,255,0), 2) 
+        #frame = cv2.resize(frame, (800, 400))
+        frame = crop_image(face_location, frame)
         cv2.imshow("Frame", frame)
 
         # listening for key press to break, press q to break
