@@ -73,6 +73,8 @@ def main():
     # process video feed
     for frame in feed.next_batch():
         # show current frame
+        face_location = face.predict(frame)
+        frame = cv2.rectangle(frame, (face_location[0], face_location[1]), (face_location[2], face_location[3]), (0,255,0), 2) 
         frame = cv2.resize(frame, (800, 400))
         cv2.imshow("Frame", frame)
 

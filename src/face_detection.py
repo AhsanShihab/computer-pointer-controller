@@ -76,10 +76,28 @@ class FaceDetection:
 
     def predict(self, image):
         '''
-        TODO: You will need to complete this method.
         This method is meant for running predictions on the input image.
+        return: Bounding box coordinates for detected face
         '''
-        raise NotImplementedError
+        # store original height, width and channel
+        oh, ow, c = image.shape
+
+        # Get processed data
+        processed_image = self.preprocess_input(image)
+
+        # start async request
+        self.exec_network.start_async(0, inputs={self.input_name: processed_image})
+
+        # get async request output
+        status = self.exec_network.requests[0].wait(-1)
+        if status == 0:
+            outputs = self.exec_network.requests[0].outputs[self.output_name]
+        
+        # return face bounding box
+        xmin, ymin, xmax, ymax = self.preprocess_output(outputs)
+        xmin, ymin, xmax, ymax = int(xmin*ow), int(ymin*oh), int(xmax*ow), int(ymax*oh)
+
+        return xmin, ymin, xmax, ymax
 
     def check_model(self):
         raise NotImplementedError
@@ -101,7 +119,31 @@ class FaceDetection:
 
     def preprocess_output(self, outputs):
         '''
-        Before feeding the output of this model to the next model,
-        you might have to preprocess the output. This function is where you can do that.
+        Extracts the coordinates of the detected face with highest confidence
+        return: Touple containing bounding box coordinates
         '''
-        raise NotImplementedError
+        boxes = outputs[0][0]
+        max_conf = 0.4              # threshold value
+        max_box = 0
+        face_found = False
+
+        # find the location of the face with highest confidence
+        for i in range(len(boxes)):
+            box = boxes[i]
+            conf = box[2]
+            if conf == max(conf, max_conf):
+                face_found = True
+                max_conf = conf
+                max_box = i
+        
+        # get bounding box coordinates of the face
+        if face_found:
+            box = boxes[max_box]
+            xmin = box[3]
+            ymin = box[4]
+            xmax = box[5]
+            ymax = box[6]
+        
+            return xmin, ymin, xmax, ymax
+        
+        return 0, 0, 0, 0
