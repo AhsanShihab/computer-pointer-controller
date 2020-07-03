@@ -1,5 +1,6 @@
 from openvino.inference_engine import IENetwork, IECore
 import cv2
+import numpy as np
 
 class HeadPose:
     '''
@@ -58,10 +59,26 @@ class HeadPose:
 
     def predict(self, image):
         '''
-        TODO: You will need to complete this method.
-        This method is meant for running predictions on the input image.
+        This method runs predictions on the input image.
+        return: 1x3 array containing yaw, pitch, roll
         '''
-        raise NotImplementedError
+        # Get processed data
+        processed_image = self.preprocess_input(image)
+
+        # start async request
+        self.exec_network.start_async(0, inputs={self.input_name: processed_image})
+
+        # get async request output
+        status = self.exec_network.requests[0].wait(-1)
+        if status == 0:
+            outputs = []
+            outputs.append(self.exec_network.requests[0].outputs[self.output_name[0]])
+            outputs.append(self.exec_network.requests[0].outputs[self.output_name[1]])
+            outputs.append(self.exec_network.requests[0].outputs[self.output_name[2]])
+
+        # process output
+        pose = self.preprocess_output(outputs)
+        return pose
 
     def check_model(self):
         """
@@ -99,7 +116,16 @@ class HeadPose:
 
     def preprocess_output(self, outputs):
         '''
-        Before feeding the output of this model to the next model,
-        you might have to preprocess the output. This function is where you can do that.
+        Process the output to prepare for the next model's input
+        return: 1x3 array containing yaw, pitch, roll values
         '''
-        raise NotImplementedError
+        # extract the values
+        yaw = float(outputs[0][0,0])
+        pitch = float(outputs[1][0,0])
+        roll = float(outputs[2][0,0])
+
+        # create array
+        pose = np.array([yaw, pitch, roll]).reshape(1,3)
+
+        return pose
+

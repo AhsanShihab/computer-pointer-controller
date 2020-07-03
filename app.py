@@ -91,7 +91,7 @@ def main():
             cropped_face = crop_image(face_location, frame)
 
             # get head pose
-            head_position = head_pose.predict(cropped_face)
+            head_position = head_pose.predict(frame)
 
         else:
             pass
@@ -100,6 +100,15 @@ def main():
             frame = cv2.rectangle(frame, (face_location[0], face_location[1]), (face_location[2], face_location[3]), (0,255,0), 2) 
             frame = cv2.resize(frame, (800, 400))
             cv2.imshow("Frame", frame)
+
+        elif args.results == 2:
+            frame = cv2.resize(frame, (800, 400))
+            yaw, pitch, roll = head_position[0, 0], head_position[0, 1], head_position[0, 2]
+            cv2.putText(frame, "yaw: " + str(yaw), (5,10), cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 255, 0), 1)
+            cv2.putText(frame, "pitch: " + str(pitch), (5,30), cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 255, 0), 1)
+            cv2.putText(frame, "roll: " + str(roll), (5,50), cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 255, 0), 1)
+            
+            cv2.imshow("Head Position", frame)
         
 
         # listening for key press to break, press q to break
