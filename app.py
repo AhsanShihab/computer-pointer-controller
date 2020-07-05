@@ -116,6 +116,9 @@ def main():
             x = gaze_estimation[0]
             y = gaze_estimation[1]
 
+            # move mouse
+            mouse.move(x, y)
+
 
         else:
             pass
