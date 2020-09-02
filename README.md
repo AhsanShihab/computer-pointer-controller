@@ -77,10 +77,10 @@ The app is tested on Intel Core i5-4200M CPU. Performance on other hardwares are
 ## Results
 The benchmark results for the models are shown in the following graph. It is obsereved that lower precision model increases the inference performance of the model. Although the face-detection-adas-0001 model performs best on FP16 precision and worst on INT8. Performance of gaze-estimation-adas-0002 is best at INT8 precision. Model loading time is lowest for FP32. But as model is loaded once, this has low impact on app's performance.
 
-![face](images/figure_1.png)
-![head](images/figure_2.png)
-![landmark](images/figure_3.png)
-![gaze](images/figure_4.png)
+![face](images/Figure_1.png)
+![head](images/Figure_2.png)
+![landmark](images/Figure_3.png)
+![gaze](images/Figure_4.png)
 
 ### Best Precision Combinations
 From the benchmark test, the best precision combinations for the model based on their FPS performance on CPU are found to be as following,
